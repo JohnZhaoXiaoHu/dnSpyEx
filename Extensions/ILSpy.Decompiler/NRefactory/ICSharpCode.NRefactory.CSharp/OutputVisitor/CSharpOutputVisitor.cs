@@ -306,29 +306,6 @@ namespace ICSharpCode.NRefactory.CSharp {
 			braceHelper.RightParen();
 		}
 
-		#if DOTNET35
-		void WriteCommaSeparatedList(IEnumerable<VariableInitializer> list)
-		{
-			WriteCommaSeparatedList(list.SafeCast<VariableInitializer, AstNode>());
-		}
-
-		void WriteCommaSeparatedList(IEnumerable<AstType> list)
-		{
-			WriteCommaSeparatedList(list.SafeCast<AstType, AstNode>());
-		}
-
-		void WriteCommaSeparatedListInParenthesis(IEnumerable<Expression> list, bool spaceWithin)
-		{
-			WriteCommaSeparatedListInParenthesis(list.SafeCast<Expression, AstNode>(), spaceWithin);
-		}
-
-		void WriteCommaSeparatedListInParenthesis(IEnumerable<ParameterDeclaration> list, bool spaceWithin)
-		{
-			WriteCommaSeparatedListInParenthesis(list.SafeCast<ParameterDeclaration, AstNode>(), spaceWithin);
-		}
-
-		#endif
-
 		protected virtual void WriteCommaSeparatedListInBrackets(IEnumerable<ParameterDeclaration> list, bool spaceWithin, CodeBracesRangeFlags flags)
 		{
 			var braceHelper = BraceHelper.LeftBracket(this, flags);
@@ -660,11 +637,11 @@ namespace ICSharpCode.NRefactory.CSharp {
 			if (unconditionalKeywords.Contains(identifier)) {
 				return true;
 			}
-			foreach (AstNode ancestor in context.Ancestors) {
-				if (ancestor is QueryExpression && queryKeywords.Contains(identifier)) {
-					return true;
-				}
-				if (identifier == "await") {
+			if (queryKeywords.Contains(identifier)) {
+				return context.Ancestors.Any(ancestor => ancestor is QueryExpression);
+			}
+			if (identifier == "await") {
+				foreach (AstNode ancestor in context.Ancestors) {
 					// with lambdas/anonymous methods,
 					if (ancestor is LambdaExpression) {
 						return ((LambdaExpression)ancestor).IsAsync;
@@ -1441,6 +1418,7 @@ namespace ICSharpCode.NRefactory.CSharp {
 				int start = writer.GetLocation() ?? 0;
 				WriteKeyword(opSymbol);
 				writer.AddHighlightedKeywordReference(currentMethodRefs.AwaitReference, start, writer.GetLocation() ?? 0);
+				Space();
 			} else if (!(opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement)) {
 				WriteToken(opSymbol, BoxedTextColor.Operator);
 			}

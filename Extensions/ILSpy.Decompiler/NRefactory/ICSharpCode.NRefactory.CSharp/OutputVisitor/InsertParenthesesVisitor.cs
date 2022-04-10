@@ -406,7 +406,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 
-		public override void VisitNamedExpression (NamedExpression namedExpression)
+		public override void VisitNamedExpression(NamedExpression namedExpression)
 		{
 			if (InsertParenthesesForReadability) {
 				ParenthesizeIfRequired(namedExpression.Expression, PrecedenceLevel.RelationalAndTypeTesting + 1);
