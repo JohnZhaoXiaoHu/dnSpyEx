@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -380,7 +380,11 @@ namespace ICSharpCode.Decompiler.ILAst {
 			return new ILExpression(ILCode.YieldReturn, null, arg);
 		}
 
-		ILExpression CreateYieldBreak() => new ILExpression(ILCode.YieldBreak, null);
+		ILExpression CreateYieldBreak(ILNode original = null) {
+			var yieldBreak = new ILExpression(ILCode.YieldBreak, null);
+			original?.AddSelfAndChildrenRecursiveILSpans(yieldBreak.ILSpans);
+			return yieldBreak;
+		}
 
 		void ConvertBody(List<ILNode> body, int startPos, int bodyLength) {
 			newBody = new List<ILNode>();
@@ -425,12 +429,12 @@ namespace ICSharpCode.Decompiler.ILAst {
 							throw new SymbolicAnalysisFailedException();
 						if (br.Operand != returnLabel) {
 							UpdateFinallyMethodIndex(origTopLevelBody, br, ref finallyMethodIndexes);
-							newBody.Add(CreateYieldBreak());
+							newBody.Add(CreateYieldBreak(expr));
 						}
 						else {
 							val = (int)expr.Arguments[0].Operand;
 							if (val == 0)
-								newBody.Add(CreateYieldBreak());
+								newBody.Add(CreateYieldBreak(expr));
 							else if (val == 1)
 								newBody.Add(MakeGoTo(labels, currentState));
 							else
@@ -515,7 +519,7 @@ namespace ICSharpCode.Decompiler.ILAst {
 						throw new SymbolicAnalysisFailedException();
 					val = (int)expr.Arguments[0].Operand;
 					if (val == 0)
-						newBody.Add(CreateYieldBreak());
+						newBody.Add(CreateYieldBreak(expr));
 					else if (val == 1)
 						newBody.Add(MakeGoTo(labels, currentState));
 					else
@@ -533,7 +537,7 @@ namespace ICSharpCode.Decompiler.ILAst {
 							ILExpression br = body.ElementAtOrDefault(++pos) as ILExpression;
 							if (br == null || !(br.Code == ILCode.Br || br.Code == ILCode.Leave) || br.Operand != returnFalseLabel)
 								throw new SymbolicAnalysisFailedException();
-							newBody.Add(CreateYieldBreak());
+							newBody.Add(CreateYieldBreak(expr));
 						}
 						else if (finallyMethodToStateRange.TryGetValue(method, out stateRange)) {
 							bool hasBeenCalled = calledFinallyMethods.Contains(method);
@@ -576,7 +580,7 @@ namespace ICSharpCode.Decompiler.ILAst {
 				case ILCode.Br:
 				case ILCode.Leave:
 					if (expr.Operand == returnFalseLabel && origTopLevelBody != body) {
-						newBody.Add(CreateYieldBreak());
+						newBody.Add(CreateYieldBreak(expr));
 						break;
 					}
 					goto default;

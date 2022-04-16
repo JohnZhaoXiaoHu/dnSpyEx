@@ -315,6 +315,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms {
 				Expression converted = ExpressionTreeConverter.TryConvert(context, invocationExpression, this.stringBuilder);
 				if (converted != null) {
 					//TODO: Do we need to preserve ILSpans or is it taken care of by TryConvert?
+					converted.RemoveAllILSpansRecursive();
+					invocationExpression.AddAllRecursiveILSpansTo(converted);
 					invocationExpression.ReplaceWith(converted);
 					return converted.AcceptVisitor(this, data);
 				}

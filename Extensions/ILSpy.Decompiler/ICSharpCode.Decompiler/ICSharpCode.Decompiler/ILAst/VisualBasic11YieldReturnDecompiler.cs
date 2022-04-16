@@ -205,7 +205,11 @@ namespace ICSharpCode.Decompiler.ILAst {
 			return new ILExpression(ILCode.YieldReturn, null, arg);
 		}
 
-		ILExpression CreateYieldBreak() => new ILExpression(ILCode.YieldBreak, null);
+		ILExpression CreateYieldBreak(ILNode original = null) {
+			var yieldBreak = new ILExpression(ILCode.YieldBreak, null);
+			original?.AddSelfAndChildrenRecursiveILSpans(yieldBreak.ILSpans);
+			return yieldBreak;
+		}
 
 		void ConvertBody(List<ILNode> body, int startPos, int bodyLength) {
 			newBody = new List<ILNode>();
@@ -253,7 +257,7 @@ namespace ICSharpCode.Decompiler.ILAst {
 							throw new SymbolicAnalysisFailedException();
 						val = (int)expr.Arguments[0].Operand;
 						if (val == 0)
-							newBody.Add(CreateYieldBreak());
+							newBody.Add(CreateYieldBreak(expr));
 						else if (val == 1)
 							newBody.Add(MakeGoTo(labels, currentState));
 						else
@@ -317,7 +321,7 @@ namespace ICSharpCode.Decompiler.ILAst {
 
 				case ILCode.Leave:
 					if (expr.Operand == returnFalseLabel) {
-						newBody.Add(CreateYieldBreak());
+						newBody.Add(CreateYieldBreak(expr));
 						break;
 					}
 					goto default;
